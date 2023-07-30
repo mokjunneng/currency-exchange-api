@@ -1,0 +1,27 @@
+{
+  "name": "currency-exchange-api",
+  "packageManager": "yarn@3.6.1",
+  "scripts": {
+    "start": "ts-node src/server.ts",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.5",
+    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "@typescript-eslint/parser": "^6.2.0",
+    "eslint": "^8.46.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3",
+    "prettier": "^3.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "lint-staged": {
+    "src/**/*.{js,ts,json}": [
+      "prettier --write"
+    ],
+    "src/**/*.{js,ts}": [
+      "eslint --fix"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+# Dependency directory
+node_modules/
+
+# Built ts files
+build/
+
+# YAML files
+*.yml
+
+# Markdown files
+*.md
+
+# Project files
+.gitattributes
+.gitignore
+.prettierignore
+yarn.lock
