@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { ExchangeRates, Rates } from '../../models';
+import { ExchangeRates, HistoricalExchangeRates, Rates } from '../../models';
 import { v4 as uuid } from 'uuid';
 import { Currency } from '../../constants/currencies';
 
@@ -48,5 +48,33 @@ export class ExchangeRatePersistenceService {
         return combinedRates;
       }, {} as Rates),
     };
+  }
+
+  async getHistoricalRates(
+    baseCurrency: Currency,
+    targetCurrency: Currency,
+    fromTimestamp: string,
+    toTimestamp?: string,
+  ): Promise<HistoricalExchangeRates> {
+    const rates = await this.dbClient.currencyExchange.findMany({
+      where: {
+        baseCurrency: {
+          equals: baseCurrency,
+        },
+        targetCurrency: {
+          equals: targetCurrency,
+        },
+        timestamp: {
+          gte: new Date(parseInt(fromTimestamp)),
+          lte: toTimestamp ? new Date(parseInt(toTimestamp)) : new Date(),
+        },
+      },
+    });
+    return rates.map((rate) => {
+      return {
+        timestamp: rate.timestamp.getTime(),
+        value: rate.rate,
+      };
+    });
   }
 }

@@ -6,6 +6,7 @@
 `Node` version - ^20.6.0
 `Docker` version - 23.0.5 (what I used for the project, previous versions should work)
 
+
 ## Install
 
 ```
@@ -32,6 +33,7 @@ Open [http://localhost:8000](http://localhost:8000) to view it in the browser.
 4. Generate Prisma Client types `yarn prisma:generate`
 5. Start the server `yarn start`
 
+---
 ## APIs
 
 ### Get Exchange Rates
@@ -70,6 +72,44 @@ Get current exchange rates. Allow to specify rates in fiat or crypto
     "SGD": "2853.29",
     "EUR": "1945.12"
   }
+}
+```
+
+### Get Historical Exchange Rates
+
+`GET /historical-rates`
+
+#### Arguments
+| Parameter       | Type   | Required | Description                 |
+|-----------------|--------|----------| ----------------------------|
+| base_currency   | string | Required | The reference base currency |
+| target_currency | string | Required | The target currency         |
+| start           | string | Required | The starting Unix timestamp in UTC, in milliseconds. |
+| end             | string | Optional | The ending Unix 2mestamp in UTC (in milliseconds). If undefined, it assumes the current time. |
+
+> Example request
+
+`curl https://localhost:8000/historical-rates?base_currency=USD&target_currency=ETH&start=1672508225000&end=1675013825000`
+
+> Example response
+
+```JSON
+{
+  "results": [
+    {
+      "timestamp": 1672508225000,
+      "value": "0.00049"
+    },
+    {
+      "timestamp": 1672508325000,
+      "value": "0.00052"
+    },
+    {
+      "timestamp": 1672508425000,
+      "value": "0.00050"
+    },
+    // ... more results
+  ]
 }
 ```
 

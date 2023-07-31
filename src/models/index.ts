@@ -20,3 +20,8 @@ export interface ExchangeRates {
 export type Rates = {
   [C in Currency]: string;
 };
+
+export type HistoricalExchangeRates = { timestamp: number; value: string }[];
+export interface HistoricalExchangeRatesDto {
+  results: HistoricalExchangeRates;
+}

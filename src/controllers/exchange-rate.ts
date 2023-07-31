@@ -2,9 +2,14 @@ import {
   AVAILABLE_CRYPTO_CURRENCIES,
   AVAILABLE_FIAT_CURRENCIES,
   CryptoCurrency,
+  Currency,
   FiatCurrency,
 } from '../constants/currencies';
-import { CryptoCurrencyExchangeRatesInFiat, FiatCurrencyExchangeRatesInCrypto } from '../models';
+import {
+  CryptoCurrencyExchangeRatesInFiat,
+  FiatCurrencyExchangeRatesInCrypto,
+  HistoricalExchangeRates,
+} from '../models';
 import { ExchangeRatePersistenceService } from '../services/persistence/exchange-rate';
 
 export class ExchangeRateController {
@@ -42,5 +47,19 @@ export class ExchangeRateController {
     }, {} as CryptoCurrencyExchangeRatesInFiat);
 
     return cryptoCurrencyExchangeRatesInFiat;
+  }
+
+  async getHistoricalRates(
+    baseCurrency: Currency,
+    targetCurrency: Currency,
+    fromTimestamp: string,
+    toTimestamp?: string,
+  ): Promise<HistoricalExchangeRates> {
+    return this.persistenceService.getHistoricalRates(
+      baseCurrency,
+      targetCurrency,
+      fromTimestamp,
+      toTimestamp,
+    );
   }
 }

@@ -1,5 +1,6 @@
 import express from 'express';
-import { getExchangeRates } from './handlers/exchange-rate';
+import { Currency } from './constants/currencies';
+import { getExchangeRates, getHistoricalRates } from './handlers/exchange-rate';
 import { startScheduler, stopScheduler } from './handlers/scheduler';
 import { getMandatoryEnvironmentVariable } from './helpers/environment';
 import { ClientError } from './helpers/errors';
@@ -26,6 +27,35 @@ app.get('/exchange-rates', async (req, res) => {
     return res
       .status(400)
       .json({ message: 'Query string `base` is required (e.g. /exchange-rate?base=crypto)' });
+  }
+});
+
+app.get('/historical-rates', async (req, res) => {
+  const baseCurrency = req.query.base_currency as Currency;
+  const targetCurrency = req.query.target_currency as Currency;
+  const fromTimestamp = req.query.start as string;
+  const toTimestamp = req.query.end ? (req.query.end as string) : undefined;
+
+  if (baseCurrency && targetCurrency && fromTimestamp) {
+    try {
+      const historicalRates = await getHistoricalRates(
+        baseCurrency,
+        targetCurrency,
+        fromTimestamp,
+        toTimestamp,
+      );
+      return res.status(200).json(historicalRates);
+    } catch (error) {
+      const response = handleApiError(error as Error);
+      return res.status(response.statusCode).json(JSON.parse(response.body));
+    }
+  } else {
+    return res
+      .status(400)
+      .json({
+        message:
+          'Query string `base_currency`, `target_currency` and `start` is required. `end` is optional (e.g. /historical-rates?base_currency=USD&target_currency=ETH&start=1672508225000&end=1675013825000)',
+      });
   }
 });
 
