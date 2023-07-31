@@ -10,7 +10,7 @@ const { exchangeRateController } = getDependencies();
 
 export const getExchangeRates = async <TBase extends CurrencyBase>(
   base: TBase,
-): Promise<TBase extends 'fiat' ? FiatCurrencyExchangeRatesInCrypto : CryptoCurrencyExchangeRatesInFiat> => {
+): Promise<FiatCurrencyExchangeRatesInCrypto | CryptoCurrencyExchangeRatesInFiat> => {
   switch (base) {
     case 'fiat': {
       return exchangeRateController.getFiatCurrencyExhangeRatesInCrypto();

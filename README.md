@@ -4,6 +4,7 @@
 
 `Yarn` version - ^3.6.1  
 `Node` version - ^20.6.0
+`Docker` version - 23.0.5 (what I used for the project, previous versions should work)
 
 ## Install
 
@@ -19,6 +20,17 @@ In the project directory, you can run:
 
 Runs the server in the development mode.\
 Open [http://localhost:8000](http://localhost:8000) to view it in the browser.
+
+## Local Development
+
+> Note that no data will be returned when calling `GET /exchange-rates` endpoint initially. To populate data in your local database, call the `POST /start-scheduler` endpoint after following the steps below. Refer to the APIs section for more details.
+
+1. Run a docker container hosting PostgreSQL database locally `yarn start-docker-db` (to spin down container, simply run `yarn stop-docker-db`)
+2. Run `yarn prisma:migrate-deploy` to apply all pending migrations, and create the database if it does not exist.
+> **_NOTE:_** `prisma migrate deploy` usually runs on non-development environment. However, since we need to persist the data fetched by the cron service to perform more robust testing, we can go with this. In case there's a schema drift or there's a need to reset the database, feel free to run `prisma migrate dev` or `prisma migrate reset`. See [here](https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-dev) for more information.
+3. Export the database URL using `./scripts/export-db-url.sh` for Prisma Client to connect.
+4. Generate Prisma Client types `yarn prisma:generate`
+5. Start the server `yarn start`
 
 ## APIs
 
@@ -60,3 +72,15 @@ Get current exchange rates. Allow to specify rates in fiat or crypto
   }
 }
 ```
+
+### Start Scheduler
+
+`POST {base_url}/start-scheduler`
+
+Start the cron scheduler to run background task to fetch exchange rates data from an exchange service API and insert them into persistence database. The scheduled task will run at the **start of every minute**.
+
+### Stop Scheduler
+
+`POST {base_url}/stop-scheduler`
+
+Stop the scheduler

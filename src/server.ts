@@ -1,36 +1,43 @@
-import * as http from 'http';
-import { URL } from 'node:url';
+import express from 'express';
 import { getExchangeRates } from './handlers/exchange-rate';
+import { startScheduler, stopScheduler } from './handlers/scheduler';
 import { getMandatoryEnvironmentVariable } from './helpers/environment';
 import { ClientError } from './helpers/errors';
-import { jsonError, jsonResponse } from './helpers/json-response';
+import { jsonError } from './helpers/json-response';
 import { CurrencyBase } from './models';
 
-const host = 'localhost';
-const port = 8000;
+const host = getMandatoryEnvironmentVariable('HOST');
+const port = Number(getMandatoryEnvironmentVariable('PORT'));
 
-const requestListener: http.RequestListener = async function (req, res) {
-  // Handle incoming requests
-  const url = new URL(req.url, `http://${req.headers.host}`);
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-  if (url.pathname === '/exchange-rates') {
-    const queryParams = url.searchParams;
+app.get('/exchange-rates', async (req, res) => {
+  if (req.query.base) {
     try {
-      const exchangeRates = await getExchangeRates(queryParams.get('base') as CurrencyBase);
-      const response = jsonResponse(exchangeRates);
-      res.writeHead(response.statusCode, response.headers);
-      res.end(response.body);
+      const exchangeRates = await getExchangeRates(req.query.base as CurrencyBase);
+      return res.status(200).json(exchangeRates);
     } catch (error) {
-      const errorResponse = handleApiError(error);
-      res.writeHead(errorResponse.statusCode, errorResponse.headers);
-      res.end(errorResponse.body);
+      const response = handleApiError(error as Error);
+      return res.status(response.statusCode).json(JSON.parse(response.body));
     }
   } else {
-    // Unidentifiable request URL, response with a 404 not found error
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('404 Not Found');
+    return res
+      .status(400)
+      .json({ message: 'Query string `base` is required (e.g. /exchange-rate?base=crypto)' });
   }
-};
+});
+
+app.post('/start-scheduler', async (req, res) => {
+  await startScheduler();
+  return res.json({ message: 'OK' });
+});
+
+app.post('/stop-scheduler', async (req, res) => {
+  await stopScheduler();
+  return res.json({ message: 'OK' });
+});
 
 // Handle 4XX client errors and 5XX server errors here
 const handleApiError = function (err: Error) {
@@ -54,14 +61,6 @@ const handleApiError = function (err: Error) {
   return jsonError('Internal server error', 500);
 };
 
-function init() {
-  const server = http.createServer(requestListener);
-  server.listen(
-    Number(getMandatoryEnvironmentVariable('PORT')),
-    getMandatoryEnvironmentVariable('HOST'),
-    () => {
-      console.log(`Server is running on http://${host}:${port}`);
-    },
-  );
-}
-init();
+app.listen(port, host, () => {
+  console.log(`Server is running on http://${host}:${port}`);
+});

@@ -1,23 +1,26 @@
-import { AVAILABLE_CRYPTO_CURRENCIES, AVAILABLE_FIAT_CURRENCIES } from '../constants/currencies';
+import {
+  AVAILABLE_CRYPTO_CURRENCIES,
+  AVAILABLE_FIAT_CURRENCIES,
+  CryptoCurrency,
+  FiatCurrency,
+} from '../constants/currencies';
 import { CryptoCurrencyExchangeRatesInFiat, FiatCurrencyExchangeRatesInCrypto } from '../models';
-import { BaseExchangeService } from '../services/exchange/base';
+import { ExchangeRatePersistenceService } from '../services/persistence/exchange-rate';
 
 export class ExchangeRateController {
-  constructor(private readonly exchangeService: BaseExchangeService) {}
+  constructor(private readonly persistenceService: ExchangeRatePersistenceService) {}
 
   async getFiatCurrencyExhangeRatesInCrypto(): Promise<FiatCurrencyExchangeRatesInCrypto> {
-    // For each available fiat currency, we get the respective exchange rates
+    // For each available fiat currency, we get the respective crypto exchange rates
     const fiatCurrencyExchangeRates = await Promise.all(
-      AVAILABLE_FIAT_CURRENCIES.map(async (currency) => {
-        return (await this.exchangeService.getExchangeRates(currency)).data;
+      AVAILABLE_FIAT_CURRENCIES.map((currency) => {
+        return this.persistenceService.getLatestExchangeRates(currency, AVAILABLE_CRYPTO_CURRENCIES.slice());
       }, this),
     );
 
-    // For each available fiat currency, we find the respective crypto exchange rates and combine them
+    // Combine all the rates
     const fiatCurrencyExchangeRatesInCrypto = fiatCurrencyExchangeRates.reduce((combinedRates, rates) => {
-      combinedRates[rates.currency] = Object.fromEntries(
-        AVAILABLE_CRYPTO_CURRENCIES.map((cryptoCurrency) => [cryptoCurrency, rates.rates[cryptoCurrency]]),
-      );
+      combinedRates[rates.baseCurrency as FiatCurrency] = rates.rates;
       return combinedRates;
     }, {} as FiatCurrencyExchangeRatesInCrypto);
 
@@ -25,20 +28,18 @@ export class ExchangeRateController {
   }
 
   async getCryptoCurrencyExhangeRatesInFiat(): Promise<CryptoCurrencyExchangeRatesInFiat> {
-    // For each available crypto currency, we get the respective exchange rates
+    // For each available crypto currency, we get the respective fiat exchange rates
     const cryptoCurrencyExchangeRates = await Promise.all(
-      AVAILABLE_CRYPTO_CURRENCIES.map(async (currency) => {
-        return (await this.exchangeService.getExchangeRates(currency)).data;
+      AVAILABLE_CRYPTO_CURRENCIES.map((currency) => {
+        return this.persistenceService.getLatestExchangeRates(currency, AVAILABLE_FIAT_CURRENCIES.slice());
       }, this),
     );
 
-    // For each available crypto currency, we find the respective fiat exchange rates and combine them
+    // Combine all the rates
     const cryptoCurrencyExchangeRatesInFiat = cryptoCurrencyExchangeRates.reduce((combinedRates, rates) => {
-      combinedRates[rates.currency] = Object.fromEntries(
-        AVAILABLE_FIAT_CURRENCIES.map((fiatCurrency) => [fiatCurrency, rates.rates[fiatCurrency]]),
-      );
+      combinedRates[rates.baseCurrency as CryptoCurrency] = rates.rates;
       return combinedRates;
-    }, {} as FiatCurrencyExchangeRatesInCrypto);
+    }, {} as CryptoCurrencyExchangeRatesInFiat);
 
     return cryptoCurrencyExchangeRatesInFiat;
   }

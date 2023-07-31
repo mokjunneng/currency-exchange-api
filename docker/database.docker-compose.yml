@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  currency-exchange-db:
+    image: postgres:latest
+    container_name: currency-exchange-db
+    environment:
+      POSTGRES_USER: currency_exchange_local
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: currency_exchange_local
+    ports:
+      - 5436:5432
+    volumes:
+      - currency-exchange-data:/var/lib/postgresql/data
+
+volumes:
+  currency-exchange-data:
